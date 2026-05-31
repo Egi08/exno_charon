@@ -1,0 +1,162 @@
+{
+  "6NLvUzfYH4TC98mYcKRnYjWsH6879tJwxEy2vopzLfzu": {
+    "name": "6NLvUzfY",
+    "base_mint": null,
+    "deploys": [],
+    "total_deploys": 0,
+    "avg_pnl_pct": 0,
+    "win_rate": 0,
+    "adjusted_win_rate": 0,
+    "adjusted_win_rate_sample_count": 0,
+    "last_deployed_at": null,
+    "last_outcome": null,
+    "notes": [],
+    "snapshots": [
+      {
+        "ts": "2026-05-29T02:50:00.973Z",
+        "position": "SIMwniZg1gcdVAkxTMCXhxhq6ZcwigNosfcGJ1UuiAvH",
+        "pnl_pct": 0,
+        "pnl_usd": null,
+        "in_range": true,
+        "unclaimed_fees_usd": null,
+        "minutes_out_of_range": null,
+        "age_minutes": 5
+      },
+      {
+        "ts": "2026-05-29T03:00:00.785Z",
+        "position": "SIMwniZg1gcdVAkxTMCXhxhq6ZcwigNosfcGJ1UuiAvH",
+        "pnl_pct": 3.03,
+        "pnl_usd": 20.84,
+        "in_range": false,
+        "unclaimed_fees_usd": 19.14,
+        "minutes_out_of_range": 0,
+        "age_minutes": 15
+      }
+    ]
+  },
+  "FyMyXnLtY2sEDkpMwuab6Tndav7dr7WMEmoXkNjATyqg": {
+    "name": "SIM-FyMy",
+    "base_mint": null,
+    "deploys": [],
+    "total_deploys": 0,
+    "avg_pnl_pct": 0,
+    "win_rate": 0,
+    "adjusted_win_rate": 0,
+    "adjusted_win_rate_sample_count": 0,
+    "last_deployed_at": null,
+    "last_outcome": null,
+    "notes": [],
+    "snapshots": [
+      {
+        "ts": "2026-05-29T03:30:00.998Z",
+        "position": "SIMiVjZQbbm3RjvBxFWRxnymikuBjrZ3awdje1roGd5C",
+        "pnl_pct": -99.9,
+        "pnl_usd": -22.93,
+        "in_range": true,
+        "unclaimed_fees_usd": 0.01,
+        "minutes_out_of_range": 0,
+        "age_minutes": 9
+      },
+      {
+        "ts": "2026-05-29T13:41:55.179Z",
+        "position": "SIMLF6ywp6KJg2oFRws8EFaFHehsE5U3QeLVw2kYndcC",
+        "pnl_pct": -99.9,
+        "pnl_usd": -22.94,
+        "in_range": true,
+        "unclaimed_fees_usd": 0,
+        "minutes_out_of_range": 0,
+        "age_minutes": 0
+      },
+      {
+        "ts": "2026-05-29T13:47:07.488Z",
+        "position": "SIMmuRE9FoVfqLcXMS7j66V2jeKLZaruTY5QYgEhDvAN",
+        "pnl_pct": -99.9,
+        "pnl_usd": -22.94,
+        "in_range": true,
+        "unclaimed_fees_usd": 0,
+        "minutes_out_of_range": 0,
+        "age_minutes": 0
+      },
+      {
+        "ts": "2026-05-29T13:50:01.669Z",
+        "position": "SIMmuRE9FoVfqLcXMS7j66V2jeKLZaruTY5QYgEhDvAN",
+        "pnl_pct": -99.9,
+        "pnl_usd": -22.94,
+        "in_range": true,
+        "unclaimed_fees_usd": 0,
+        "minutes_out_of_range": 0,
+        "age_minutes": 3
+      },
+      {
+        "ts": "2026-05-29T14:01:37.767Z",
+        "position": "SIMRRRXj1LUu9HAMmhkoNVxYKTF72sqmnypcsK5UUdYk",
+        "pnl_pct": -99.9,
+        "pnl_usd": -22.94,
+        "in_range": true,
+        "unclaimed_fees_usd": 0,
+        "minutes_out_of_range": 0,
+        "age_minutes": 0
+      }
+    ]
+  },
+  "DRWNnjNpmrWTs7mmNYyH8d9qmPmcVQHenKh369cwUiLp": {
+    "name": "SIM-DRWN",
+    "base_mint": null,
+    "deploys": [],
+    "total_deploys": 0,
+    "avg_pnl_pct": 0,
+    "win_rate": 0,
+    "adjusted_win_rate": 0,
+    "adjusted_win_rate_sample_count": 0,
+    "last_deployed_at": null,
+    "last_outcome": null,
+    "notes": [],
+    "snapshots": [
+      {
+        "ts": "2026-05-29T06:20:02.031Z",
+        "position": "SIMXiU2MwbFfVvrQzuAX9F6UvfDs4qEHnVsDUhBEtPVe",
+        "pnl_pct": -99.9,
+        "pnl_usd": -22.94,
+        "in_range": false,
+        "unclaimed_fees_usd": 0,
+        "minutes_out_of_range": 0,
+        "age_minutes": 9
+      }
+    ]
+  },
+  "E7YWq61yHZxZxcPvDg3imN9Ucd8Ga7byJrjtd3xWmdAk": {
+    "name": "SIM-E7YW",
+    "base_mint": null,
+    "deploys": [],
+    "total_deploys": 0,
+    "avg_pnl_pct": 0,
+    "win_rate": 0,
+    "adjusted_win_rate": 0,
+    "adjusted_win_rate_sample_count": 0,
+    "last_deployed_at": null,
+    "last_outcome": null,
+    "notes": [],
+    "snapshots": [
+      {
+        "ts": "2026-05-29T09:51:54.716Z",
+        "position": "SIMSBjetWPjUDpYXVUNNZsQBQw6de9y5hZny7smd8Hr2",
+        "pnl_pct": -99.9,
+        "pnl_usd": -22.94,
+        "in_range": true,
+        "unclaimed_fees_usd": 0,
+        "minutes_out_of_range": 0,
+        "age_minutes": 0
+      },
+      {
+        "ts": "2026-05-29T14:30:01.485Z",
+        "position": "SIM9kg3WXUkCZzeYHHVq6CHKRzWXKcbxoj3nJUAcU5Z8",
+        "pnl_pct": 2.01,
+        "pnl_usd": 0.46,
+        "in_range": false,
+        "unclaimed_fees_usd": 0,
+        "minutes_out_of_range": 0,
+        "age_minutes": 7
+      }
+    ]
+  }
+}

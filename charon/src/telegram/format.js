@@ -1,0 +1,215 @@
+import { escapeHtml, fmtPct, fmtSol, fmtUsd, short, gmgnLink, txLink, accountLink } from '../format.js';
+import { strategyById } from '../db/settings.js';
+import { effectiveExitParams } from '../execution/exitLadder.js';
+
+export function formatRecipients(shareholders) {
+  if (!shareholders?.length) return '';
+  return shareholders.slice(0, 5).map((holder, index) => {
+    const pct = holder.bps != null ? ` (${fmtPct(holder.bps / 100)})` : '';
+    const label = shareholders.length > 1 ? `Recipient ${index + 1}` : 'Recipient';
+    return `${label}: <a href="${accountLink(holder.pubkey)}">${short(holder.pubkey)}</a>${pct}`;
+  }).join('\n') + '\n';
+}
+
+export function signalLabel(signals = {}) {
+  return [
+    signals.hasFeeClaim ? 'fees' : null,
+    signals.hasGraduated ? 'graduated' : null,
+    signals.hasTrending ? 'trending' : null,
+  ].filter(Boolean).join(' + ') || signals.route || 'unknown';
+}
+
+export function candidateSummary(candidate, decision = null) {
+  const chartWindow = candidate.chart?.windows?.find(row => row.label === 'ath_context_24h_5m' && row.available)
+    || candidate.chart?.windows?.find(row => row.label === 'recent_24h_5m' && row.available);
+  const route = candidate.signals?.label || signalLabel(candidate.signals);
+  const lines = [
+    `🛶 <b>Charon Candidate</b>`,
+    '',
+    `Signal: <b>${escapeHtml(route)}</b>`,
+    candidate.token.name || candidate.token.symbol ? `Name: <b>${escapeHtml(candidate.token.name || candidate.token.symbol)}${candidate.token.symbol && candidate.token.name ? ` (${escapeHtml(candidate.token.symbol)})` : ''}</b>` : null,
+    `Token: <a href="${gmgnLink(candidate.token.mint)}">${short(candidate.token.mint)}</a>`,
+    `<code>${escapeHtml(candidate.token.mint)}</code>`,
+    [
+      `Mcap: ${fmtUsd(candidate.metrics.marketCapUsd)}`,
+      `Liq: ${fmtUsd(candidate.metrics.liquidityUsd)}`,
+      `Fees: ${fmtSol(candidate.metrics.gmgnTotalFeesSol)} SOL`,
+      `Grad vol: ${fmtUsd(candidate.metrics.graduatedVolumeUsd)}`,
+    ].join(' · '),
+    [
+      `Holders: ${candidate.metrics.holderCount || '?'}`,
+      `Top20: ${fmtPct(candidate.holders.top20Percent)}`,
+      `Max holder: ${fmtPct(candidate.holders.maxHolderPercent)}`,
+      `Saved wallets: ${candidate.savedWalletExposure.holderCount}/${candidate.savedWalletExposure.checked}`,
+    ].join(' · '),
+    candidate.trending ? [
+      `Trending: #${candidate.trending.rank || '?'}/${escapeHtml(candidate.trending.interval || '')}`,
+      `Vol: ${fmtUsd(candidate.metrics.trendingVolumeUsd)}`,
+      `Swaps: ${candidate.metrics.trendingSwaps || 0}`,
+      `Hot: ${candidate.metrics.trendingHotLevel || 0}`,
+      `Smart: ${candidate.metrics.trendingSmartDegenCount || 0}`,
+    ].join(' · ') : null,
+    chartWindow ? [
+      `ATH ctx: ${fmtPct(chartWindow.belowHighPercent)} from 24h high`,
+      `Range low: ${fmtPct(chartWindow.aboveLowPercent)}`,
+      `Top risk: ${candidate.chart.topBlastRisk ? 'yes' : 'no'}`,
+    ].join(' · ') : null,
+    candidate.twitterNarrative?.metrics ? [
+      `Tweet: ${candidate.twitterNarrative.metrics.likes} likes`,
+      `${candidate.twitterNarrative.metrics.retweets} RT`,
+      `${candidate.twitterNarrative.metrics.replies} replies`,
+      `${candidate.twitterNarrative.metrics.quotes} quotes`,
+    ].join(' · ') : null,
+    candidate.feeClaim ? `Fee claim: <b>${fmtSol(candidate.feeClaim.distributedSol)} SOL</b>` : null,
+    candidate.twitterNarrative?.text ? `Narrative: ${escapeHtml(candidate.twitterNarrative.text.slice(0, 220))}` : null,
+    decision ? `LLM: <b>${escapeHtml(decision.verdict)}</b> ${fmtPct(decision.confidence)} — ${escapeHtml(decision.reason || '')}` : null,
+    candidate.filters.passed ? null : `Filtered: ${escapeHtml(candidate.filters.failures.join('; '))}`,
+  ];
+  return lines.filter(Boolean).join('\n');
+}
+
+export function compactCandidateLine(row, index = null) {
+  const candidate = row.candidate;
+  const prefix = index == null ? '' : `${index}. `;
+  const name = candidate.token?.symbol || candidate.token?.name || short(candidate.token?.mint || '');
+  const signal = candidate.signals?.label || signalLabel(candidate.signals);
+  return [
+    `${prefix}<b>${escapeHtml(name)}</b>`,
+    `<a href="${gmgnLink(candidate.token.mint)}">${short(candidate.token.mint)}</a>`,
+    escapeHtml(signal),
+    `mcap ${fmtUsd(candidate.metrics?.marketCapUsd)}`,
+    `liq ${fmtUsd(candidate.metrics?.liquidityUsd)}`,
+    candidate.feeClaim ? `fee ${fmtSol(candidate.feeClaim.distributedSol)} SOL` : null,
+  ].filter(Boolean).join(' · ');
+}
+
+export function batchRevealSummary(batchId, rows, decision, triggerCandidateId = null) {
+  const selected = rows.find(row => row.id === Number(decision.selected_candidate_id));
+  const trigger = rows.find(row => row.id === Number(triggerCandidateId));
+  const lines = [
+    '🧭 <b>Charon Screening</b>',
+    '',
+    `Batch: <b>#${batchId}</b> · Screened: <b>${rows.length}</b>`,
+    trigger ? `Trigger: ${compactCandidateLine(trigger)}` : null,
+    selected ? `Pick: ${compactCandidateLine(selected)}` : 'Pick: <b>none</b>',
+    `Decision: <b>${escapeHtml(decision.verdict || 'WATCH')}</b> ${fmtPct(decision.confidence || 0)}`,
+    decision.reason ? `Reason: ${escapeHtml(String(decision.reason).slice(0, 420))}` : null,
+  ];
+  return lines.filter(Boolean).join('\n');
+}
+
+// FIX_PNL_STUCK: live PnL % for a position.
+//   - Closed → realized pnl_percent (authoritative).
+//   - Open   → CURRENT mcap (last_mcap, persisted each poll) vs entry — NOT high_water.
+//     Using high_water made losers read 0% (high_water==entry) and froze winners at their peak.
+//     Fallback chain for legacy rows pre-migration: last_mcap → high_water_mcap → entry (→ 0%).
+function firstPositiveMcap(...vals) {
+  for (const v of vals) {
+    const n = Number(v);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return 0;
+}
+export function positionPnlPercent(position) {
+  if (position.pnl_percent != null) return Number(position.pnl_percent);
+  const entry = Number(position.entry_mcap);
+  if (!Number.isFinite(entry) || entry <= 0) return 0;
+  const current = firstPositiveMcap(position.last_mcap, position.high_water_mcap, position.entry_mcap);
+  return (current / entry - 1) * 100;
+}
+export function positionPeakPnlPercent(position) {
+  const entry = Number(position.entry_mcap);
+  if (!Number.isFinite(entry) || entry <= 0 || !position.high_water_mcap) return null;
+  return (Number(position.high_water_mcap) / entry - 1) * 100;
+}
+
+export function formatPosition(position) {
+  const pnl = positionPnlPercent(position);
+  const peak = positionPeakPnlPercent(position);
+  // Only show Peak as a secondary marker for OPEN positions that have pulled back from a higher high.
+  const peakLine = (position.status === 'open' && peak != null && peak > pnl + 0.05)
+    ? ` · Peak: ${fmtPct(peak)}`
+    : '';
+  // FIX_CONFIG_PROPAGATION: for OPEN positions, display the params the engine ACTUALLY uses
+  // (live strategy config by default, or the pinned snapshot if manually overridden) so the UI
+  // can't split-brain against behavior. Closed positions keep their snapshot — that's what fired.
+  let tpShown = position.tp_percent, slShown = position.sl_percent;
+  let trailEnabledShown = position.trailing_enabled, trailPctShown = position.trailing_percent;
+  let exitTag = '';
+  if (position.status === 'open') {
+    const strat = strategyById(position.strategy_id);
+    const ep = effectiveExitParams(position, strat);
+    tpShown = ep.tpPercent; slShown = ep.slPercent;
+    trailEnabledShown = ep.trailingEnabled; trailPctShown = ep.trailingPercent;
+    const stages = Array.isArray(strat?.partial_tp_stages) ? strat.partial_tp_stages : [];
+    const stageNow = Number(position.partial_tp_stage || 0);
+    const ladderLine = stages.length
+      ? `Ladder: stage ${stageNow}/${stages.length} [${stages.map(s => `+${s.at}%→${s.sell}%`).join(', ')}]`
+      : null;
+    const beArm = Number(strat?.breakeven_arm_percent);
+    const beFloor = Number(strat?.breakeven_floor_percent);
+    const beLine = (Number.isFinite(beArm) && beArm > 0)
+      ? `Break-even: armed ≥+${beArm}% → floor +${beFloor}% ${peak != null && peak >= beArm ? '🔒 active' : '(not yet)'}`
+      : null;
+    exitTag = ep.overridden ? ' · <i>manual override</i>' : ' · <i>live config</i>';
+    return [
+      `📍 <b>${escapeHtml(position.symbol || short(position.mint))}</b> #${position.id}`,
+      `Token: <a href="${gmgnLink(position.mint)}">${short(position.mint)}</a>`,
+      `Status: <b>${escapeHtml(position.status)}</b> · Mode: <b>${escapeHtml(position.execution_mode || 'dry_run')}</b> · Strategy: <b>${escapeHtml(position.strategy_id || 'sniper')}</b>`,
+      position.entry_signature ? `Entry TX: <a href="${txLink(position.entry_signature)}">${short(position.entry_signature)}</a>` : null,
+      `Entry mcap: ${fmtUsd(position.entry_mcap)} · High: ${fmtUsd(position.high_water_mcap)}`,
+      `Size: ${fmtSol(position.size_sol)} SOL · PnL: ${fmtPct(pnl)}${peakLine}`,
+      `TP: ${fmtPct(tpShown)} · SL: ${fmtPct(slShown)} · Trail: ${trailEnabledShown ? `${fmtPct(trailPctShown)}` : 'off'}${exitTag}`,
+      ladderLine,
+      beLine,
+    ].filter(Boolean).join('\n');
+  }
+  return [
+    `📍 <b>${escapeHtml(position.symbol || short(position.mint))}</b> #${position.id}`,
+    `Token: <a href="${gmgnLink(position.mint)}">${short(position.mint)}</a>`,
+    `Status: <b>${escapeHtml(position.status)}</b> · Mode: <b>${escapeHtml(position.execution_mode || 'dry_run')}</b> · Strategy: <b>${escapeHtml(position.strategy_id || 'sniper')}</b>`,
+    position.entry_signature ? `Entry TX: <a href="${txLink(position.entry_signature)}">${short(position.entry_signature)}</a>` : null,
+    `Entry mcap: ${fmtUsd(position.entry_mcap)} · High: ${fmtUsd(position.high_water_mcap)}`,
+    `Size: ${fmtSol(position.size_sol)} SOL · PnL: ${fmtPct(pnl)}${peakLine}`,
+    `TP: ${fmtPct(position.tp_percent)} · SL: ${fmtPct(position.sl_percent)} · Trail: ${position.trailing_enabled ? `${fmtPct(position.trailing_percent)}` : 'off'}`,
+    position.exit_reason ? `Exit: ${escapeHtml(position.exit_reason)} at ${fmtUsd(position.exit_mcap)} (${fmtPct(position.pnl_percent)})` : null,
+    position.exit_signature ? `Exit TX: <a href="${txLink(position.exit_signature)}">${short(position.exit_signature)}</a>` : null,
+  ].filter(Boolean).join('\n');
+}
+
+export function compactDecisionCandidate(row) {
+  if (!row) return null;
+  const c = row.candidate;
+  return {
+    candidateId: row.id,
+    mint: c.token?.mint,
+    route: c.signals?.route,
+    signals: c.signals,
+    token: c.token,
+    metrics: c.metrics,
+    feeClaim: c.feeClaim,
+    trending: c.trending,
+    jupiterAsset: c.jupiterAsset ? {
+      liquidity: c.jupiterAsset.liquidity,
+      mcap: c.jupiterAsset.mcap,
+      fdv: c.jupiterAsset.fdv,
+      usdPrice: c.jupiterAsset.usdPrice,
+      fees: c.jupiterAsset.fees,
+      holderCount: c.jupiterAsset.holderCount,
+      audit: c.jupiterAsset.audit,
+      stats1h: c.jupiterAsset.stats1h,
+      stats24h: c.jupiterAsset.stats24h,
+    } : null,
+    holders: {
+      count: c.holders?.count,
+      top20Percent: c.holders?.top20Percent,
+      maxHolderPercent: c.holders?.maxHolderPercent,
+      top20: c.holders?.top20,
+    },
+    chart: c.chart,
+    savedWalletExposure: c.savedWalletExposure,
+    twitterNarrative: c.twitterNarrative,
+    filters: c.filters,
+    createdAtMs: c.createdAtMs,
+  };
+}
